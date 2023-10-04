@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "compatibilityLevel": "JAVA_8",
+  "refmap": "mixins.enderor.refmap.json",
+  "package": "io.github.enderor.mixins",
+  "mixins": [
+    "MixinEntityPlayer"
+  ],
+  "client": [
+  ]
+}

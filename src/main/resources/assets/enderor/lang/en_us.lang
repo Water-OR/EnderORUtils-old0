@@ -1,0 +1,14 @@
+enchantment.short_bow=Short Bow
+enchantment.enderor.short_bow.desc=Hold "Use" key to auto shoot
+
+itemGroup.enderor_items=Ender OR Utils
+
+item.item_mod.name=Mod Item
+
+item.potion_ring.name.prev=Ring of "
+item.potion_ring.name.post=" potion
+item.potion_ring.name.multiple=Ring of Multiple potions
+item.potion_ring.name=Ring of potion
+
+item.potion_ring.empty.description=Craft with an potion
+item.potion_ring.filled.description=Wear it to get the effect
