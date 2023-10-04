@@ -1,0 +1,16 @@
+[
+{
+  "modid": "enderor",
+  "name": "Ender OR Utils",
+  "description": "A util mod for Ender OR modpack",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Water OR"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
