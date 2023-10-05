@@ -10,7 +10,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
-import net.minecraftforge.common.ForgeHooks;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -54,7 +53,7 @@ public abstract class EnderORRecipe extends net.minecraftforge.registries.IForge
   }
   
   public EnderORRecipe setInput(@NotNull List<Ingredient> input) {
-    if (input.size() >= this.width * this.height) {
+    if (input.size() > this.width * this.height) {
       return this;
     }
     for (int i = 0, iMax = input.size(); i < iMax; ++i) {
@@ -73,12 +72,12 @@ public abstract class EnderORRecipe extends net.minecraftforge.registries.IForge
   
   @Override
   public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
-    return output;
+    return output.copy();
   }
   
   @Override
   public @NotNull ItemStack getRecipeOutput() {
-    return output;
+    return output.copy();
   }
   
   @Override
@@ -90,7 +89,7 @@ public abstract class EnderORRecipe extends net.minecraftforge.registries.IForge
   public @NotNull NonNullList<ItemStack> getRemainingItems(@NotNull InventoryCrafting inv) {
     NonNullList<ItemStack> remainingItems = NonNullList.withSize(inv.getSizeInventory(), ItemStack.EMPTY);
     for (int i = 0; i < inv.getSizeInventory(); ++i) {
-      remainingItems.set(i, ForgeHooks.getContainerItem(inv.getStackInSlot(i)));
+      remainingItems.set(i, inv.getStackInSlot(i));
     }
     return remainingItems;
   }
@@ -158,13 +157,15 @@ public abstract class EnderORRecipe extends net.minecraftforge.registries.IForge
   }
   
   public boolean matchesItem(ItemStack stack, @NotNull Ingredient ingredient, Comparator<NBTTagCompound> comparator) {
+    ItemStack[] stacks = ingredient.getMatchingStacks();
     if (!ingredient.apply(stack)) {
+      for (ItemStack stack1 : stacks) {
+      }
       return false;
     }
     if (!matchNBT || ingredient.equals(Ingredient.EMPTY)) {
       return true;
     }
-    ItemStack[] stacks = ingredient.getMatchingStacks();
     for (ItemStack stack1 : stacks) {
       if (stack.getItem() != stack1.getItem()) {
         continue;
@@ -194,7 +195,7 @@ public abstract class EnderORRecipe extends net.minecraftforge.registries.IForge
       matchItems.addAll(Arrays.asList(Ingredient.EMPTY.getMatchingStacks()));
       return matchItems;
     }
-    List<ItemStack> stacks = Arrays.asList(ingredient.getMatchingStacks());
+    ItemStack[] stacks = ingredient.getMatchingStacks();
     for (ItemStack stack1 : stacks) {
       if (stack.getItem() != stack1.getItem()) {
         continue;

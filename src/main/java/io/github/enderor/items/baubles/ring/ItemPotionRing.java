@@ -4,10 +4,9 @@ import baubles.api.BaubleType;
 import baubles.api.IBauble;
 import baubles.api.cap.BaublesCapabilities;
 import baubles.api.cap.BaublesContainer;
-import io.github.enderor.EnderORUtils;
 import io.github.enderor.items.EnderORItemHandler;
-import io.github.recipes.EnderORRecipe;
 import io.github.recipes.EnderORRecipesHandler;
+import io.github.recipes.IHasRecipe;
 import io.github.recipes.ShapedRecipe;
 import io.github.recipes.ShapelessRecipe;
 import net.minecraft.client.resources.I18n;
@@ -15,12 +14,11 @@ import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.init.Items;
+import net.minecraft.init.PotionTypes;
 import net.minecraft.inventory.InventoryCrafting;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemPotion;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.potion.Potion;
@@ -34,108 +32,90 @@ import net.minecraftforge.client.event.ColorHandlerEvent;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import org.apache.logging.log4j.Level;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
 
-public class ItemPotionRing extends Item implements IBauble {
+public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
   public ItemPotionRing() {
     this.setMaxDamage(0);
     this.setMaxStackSize(1);
     EnderORItemHandler.addModel(this, 0, "inventory");
-    
-    makeItemRecipe();
   }
   
+  @Override
   public void makeItemRecipe() {
+    EnderORRecipesHandler.addRecipe(
+            (new ShapelessRecipe("potion_ring_clear", 1, false) {
+              @Override
+              public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
+                ItemStack result = super.getCraftingResult(inv);
+                resetEffect(result);
+                return result;
+              }
+            })
+                    .setInput(0, this.getDefaultInstance())
+                    .setOutput(this.getDefaultInstance())
+    );
+    
     EnderORRecipesHandler.addRecipe((new ShapedRecipe("potion_ring_blank", 3, 3, false))
             .setInput(0, new ItemStack(Items.IRON_NUGGET, 1, 32767))
             .setInput(1, new ItemStack(Items.GOLD_INGOT, 1, 32767))
             .setInput(3, new ItemStack(Items.GOLD_INGOT, 1, 32767))
             .setInput(5, new ItemStack(Items.GOLD_INGOT, 1, 32767))
-            .setInput(7, new ItemStack(Items.GOLD_INGOT, 1, 32767)).setOutput(this.getDefaultInstance()));
+            .setInput(7, new ItemStack(Items.GOLD_INGOT, 1, 32767))
+            .setOutput(this.getDefaultInstance()));
     
-    PotionType.REGISTRY.forEach(potion -> {
-      if (!potion.getEffects().isEmpty()) {
-        makeRecipe(potion);
-      }
-    });
-  }
-  
-  public void makeRecipe(PotionType potion) {
-    ItemStack outputItem = getDefaultInstance();
-    addEffects(outputItem, potion.getEffects().toArray(new PotionEffect[0]));
-    List<Ingredient> ingredients = new ArrayList<>();
-    ingredients.add(Ingredient.fromStacks(PotionUtils.addPotionToItemStack(new ItemStack(Items.POTIONITEM, 1, 32767), potion)));
-    ingredients.add(Ingredient.fromStacks(new ItemStack(this, 1, 32767)));
-    EnderORRecipesHandler.addRecipe(new ShapelessRecipe(String.format("potion_ring_%s", Objects.requireNonNull(potion.getRegistryName()).getResourcePath()), 2, false) {
-      @Override
-      public @NotNull NonNullList<ItemStack> getRemainingItems(@NotNull InventoryCrafting inv) {
-        NonNullList<ItemStack> remainingItems = super.getRemainingItems(inv);
-        for (int i = 0; i < inv.getSizeInventory(); ++i) {
-          ItemStack stack = ForgeHooks.getContainerItem(inv.getStackInSlot(i));
-          if (!(stack.getItem() instanceof ItemPotion)) {
-            continue;
-          }
-          ItemStack addItem = new ItemStack(Items.GLASS_BOTTLE, stack.getCount());
-          if (stack.getTagCompound() != null) {
-            addItem.setTagCompound(stack.getTagCompound());
-          }
-          remainingItems.set(i, addItem);
-        }
-        return remainingItems;
-      }
-      
-      @Override
-      public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
-        ItemStack result = ForgeHooks.getContainerItem(output.copy());
-        if (result == ItemStack.EMPTY) {
-          return ItemStack.EMPTY;
-        }
-        for (int i = 0; i < inv.getSizeInventory(); ++i) {
-          ItemStack stack = ForgeHooks.getContainerItem(inv.getStackInSlot(i));
-          if (!(stack.getItem() instanceof ItemPotionRing) || stack.getTagCompound() == null) {
-            continue;
-          }
-          if (result.getTagCompound() != null) {
-            result.setTagCompound(new NBTTagCompound());
-          }
-          result.getTagCompound().merge(stack.getTagCompound());
-        }
-        return result;
-      }
-      
-      @Override
-      public boolean matches(@NotNull InventoryCrafting inv, World worldIn, Comparator<NBTTagCompound> comparator) {
-        int matchCount = 0, notEmptyCount = 0;
-        for (int i = 0, iMax = inv.getSizeInventory(); i < iMax; ++i) {
-          boolean isMatched = false;
-          ItemStack stack = ForgeHooks.getContainerItem(inv.getStackInSlot(i));
-          if (stack.equals(ItemStack.EMPTY)) {
-            continue;
-          }
-          for (Ingredient ingredient : input) {
-            
-            if (stack.equals(ItemStack.EMPTY)) {
-              ++notEmptyCount;
-            }
-            
-            if (matchesItem(stack.copy(), ingredient, comparator)) {
-              isMatched = true;
-              ++matchCount;
-              break;
-            }
-          }
-          if (!isMatched) {
-            return false;
-          }
-        }
-        return matchCount == input.size();
-      }
-    }.setInput(ingredients).setOutput(outputItem));
+    EnderORRecipesHandler.addRecipe((new ShapelessRecipe("potion_ring_add", 2, false) {
+              @Override
+              public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
+                ItemStack result = null;
+                for (int i = 0, iMax = inv.getSizeInventory(); i < iMax; ++i) {
+                  ItemStack stack = inv.getStackInSlot(i);
+                  if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotionRing)) {
+                    continue;
+                  }
+                  result = stack.copy();
+                  break;
+                }
+                if (result == null) {
+                  return output.copy();
+                }
+                
+                for (int i = 0, iMax = inv.getSizeInventory(); i < iMax; ++i) {
+                  ItemStack stack = inv.getStackInSlot(i);
+                  if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotion)) {
+                    continue;
+                  }
+                  if (!PotionUtils.getPotionFromItem(stack).equals(PotionTypes.EMPTY)) {
+                    setEffects(result, PotionUtils.getEffectsFromStack(stack));
+                  }
+                }
+                return result;
+              }
+              
+              @Override
+              public @NotNull NonNullList<ItemStack> getRemainingItems(@NotNull InventoryCrafting inv) {
+                NonNullList<ItemStack> remainingItems = super.getRemainingItems(inv);
+                for (int i = 0, iMax = remainingItems.size(); i < iMax; ++i) {
+                  ItemStack stack = ForgeHooks.getContainerItem(remainingItems.get(i));
+                  if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotion)) {
+                    continue;
+                  }
+                  remainingItems.set(i, new ItemStack(Items.GLASS_BOTTLE, 2, 0));
+                }
+                return remainingItems;
+              }
+            })
+                    .setInput(0, this.getDefaultInstance())
+                    .setInput(1, new ItemStack(Items.POTIONITEM, 1, 32767))
+                    .setOutput(this.getDefaultInstance())
+    );
   }
   
   public static final ItemPotionRing INSTANCE = new ItemPotionRing();
@@ -146,7 +126,7 @@ public class ItemPotionRing extends Item implements IBauble {
   
   @Override
   public @NotNull ItemStack getDefaultInstance() {
-    ItemStack stack = super.getDefaultInstance();
+    ItemStack stack = new ItemStack(this, 1, 0);
     resetEffect(stack);
     return stack;
   }
@@ -288,6 +268,10 @@ public class ItemPotionRing extends Item implements IBauble {
     }
     sortEffects(effects);
     return effects;
+  }
+  
+  public static void addEffects(@NotNull ItemStack itemStack, @NotNull List<PotionEffect> effects) {
+    addEffects(itemStack, effects.toArray(new PotionEffect[0]));
   }
   
   public static void addEffects(@NotNull ItemStack itemStack, @NotNull PotionEffect @NotNull [] effects) {

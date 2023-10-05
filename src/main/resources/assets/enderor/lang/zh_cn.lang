@@ -5,8 +5,8 @@ itemGroup.enderor_items=Ender OR 实用工具
 
 item.item_mod.name=模组物品
 
-item.potion_ring.name.prev=
-item.potion_ring.name.post=药水 指环
+item.potion_ring.name.prev=“
+item.potion_ring.name.post=”药水指环
 item.potion_ring.name.multiple=复合药水指环
 item.potion_ring.name=药水指环
 

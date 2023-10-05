@@ -2,6 +2,7 @@ package io.github.enderor.items;
 
 import io.github.enderor.EnderORUtils;
 import io.github.enderor.items.baubles.ring.ItemPotionRing;
+import io.github.recipes.IHasRecipe;
 import javafx.util.Pair;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
@@ -28,6 +29,10 @@ public class EnderORItemHandler {
   
   public static void addItem(@NotNull Item item, String registerName) {
     itemList.add(item.setRegistryName(new ResourceLocation(EnderORUtils.MOD_ID, registerName)).setUnlocalizedName(registerName).setCreativeTab(EnderORUtils.MOD_TAB));
+    
+    if (item instanceof IHasRecipe) {
+      ((IHasRecipe) item).makeItemRecipe();
+    }
   }
   
   public static void addModel(Item item, int meta, String itemIn) {

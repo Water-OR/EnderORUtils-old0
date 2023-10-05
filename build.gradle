@@ -109,9 +109,6 @@ dependencies {
     annotationProcessor ('org.spongepowered:mixin:0.8.5:processor')
     include fileTree(dir: 'libs', includes: ['*.jar'])
     implementation fg.deobf ("curse.maven:baubles-227083:2518667")
-    implementation fg.deobf ("curse.maven:bring-me-the-rings-309878:2653339")
-    implementation fg.deobf ("curse.maven:potion-fingers-btb-585193:3687419")
-    implementation fg.deobf ("curse.maven:autoreglib-250363:2746011")
 }
 
 // Example for how to get properties into the manifest for reading by the runtime..

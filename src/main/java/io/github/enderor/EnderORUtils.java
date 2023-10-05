@@ -66,6 +66,10 @@ public class EnderORUtils {
     logger.log(level, message);
   }
   
+  public static void log(Level level, String format, Object... args) {
+    logger.log(level, String.format(format, args));
+  }
+  
   @Mod.EventBusSubscriber
   public static class EventHandler {
     @SubscribeEvent

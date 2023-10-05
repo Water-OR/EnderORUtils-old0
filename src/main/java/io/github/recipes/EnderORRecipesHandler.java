@@ -1,7 +1,6 @@
 package io.github.recipes;
 
 import io.github.enderor.EnderORUtils;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.Mod;
