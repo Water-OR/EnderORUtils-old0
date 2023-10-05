@@ -93,7 +93,7 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
                     continue;
                   }
                   if (!PotionUtils.getPotionFromItem(stack).equals(PotionTypes.EMPTY)) {
-                    setEffects(result, PotionUtils.getEffectsFromStack(stack));
+                    addEffects(result, PotionUtils.getEffectsFromStack(stack));
                   }
                 }
                 return result;

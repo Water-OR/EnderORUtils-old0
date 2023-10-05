@@ -159,8 +159,6 @@ public abstract class EnderORRecipe extends net.minecraftforge.registries.IForge
   public boolean matchesItem(ItemStack stack, @NotNull Ingredient ingredient, Comparator<NBTTagCompound> comparator) {
     ItemStack[] stacks = ingredient.getMatchingStacks();
     if (!ingredient.apply(stack)) {
-      for (ItemStack stack1 : stacks) {
-      }
       return false;
     }
     if (!matchNBT || ingredient.equals(Ingredient.EMPTY)) {
