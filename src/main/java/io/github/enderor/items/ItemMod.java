@@ -32,12 +32,7 @@ public class ItemMod extends Item {
     return super.hasEffect(stack) || enableEffect;
   }
   
-  @Override
-  public @NotNull ItemStack onItemUseFinish(@NotNull ItemStack stack, @NotNull World worldIn, @NotNull EntityLivingBase entityLiving) {
-    ItemStack stack1 = super.onItemUseFinish(stack, worldIn, entityLiving);
-    ((ItemMod) stack1.getItem()).changeEnabled();
-    return stack1;
-  }
+  @Override public void onPlayerStoppedUsing(@NotNull ItemStack stack, @NotNull World worldIn, @NotNull EntityLivingBase entityLiving, int timeLeft) { ((ItemMod) stack.getItem()).changeEnabled(); }
   
   @Override
   public boolean isBeaconPayment(@NotNull ItemStack stack) {

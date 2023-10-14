@@ -2,7 +2,7 @@ package io.github.enderor.items;
 
 import io.github.enderor.EnderORUtils;
 import io.github.enderor.items.baubles.ring.ItemPotionRing;
-import io.github.recipes.IHasRecipe;
+import io.github.enderor.recipes.IHasRecipe;
 import javafx.util.Pair;
 import net.minecraft.client.renderer.block.model.ModelResourceLocation;
 import net.minecraft.item.Item;
@@ -31,7 +31,7 @@ public class EnderORItemHandler {
     itemList.add(item.setRegistryName(new ResourceLocation(EnderORUtils.MOD_ID, registerName)).setUnlocalizedName(registerName).setCreativeTab(EnderORUtils.MOD_TAB));
     
     if (item instanceof IHasRecipe) {
-      ((IHasRecipe) item).makeItemRecipe();
+      ((IHasRecipe) item).makeRecipe();
     }
   }
   
@@ -46,6 +46,7 @@ public class EnderORItemHandler {
   static {
     addItem(ItemMod.INSTANCE, "item_mod");
     addItem(ItemPotionRing.INSTANCE, "potion_ring");
+    addItem(ItemEnchantedPaper.INSTANCE, "enchanted_paper");
   }
   
   @Mod.EventBusSubscriber

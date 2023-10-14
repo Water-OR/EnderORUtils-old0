@@ -12,3 +12,7 @@ item.potion_ring.name=Ring of potion
 
 item.potion_ring.empty.description=Craft with an potion
 item.potion_ring.filled.description=Wear it to get the effect
+
+config.title=Ender OR Utils Config Page
+config.general.enderor.hit_box_enable=Enable hit-box render
+config.general.enderor.hit_box_color=Hit-box render color

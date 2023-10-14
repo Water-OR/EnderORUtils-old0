@@ -12,3 +12,7 @@ item.potion_ring.name=药水指环
 
 item.potion_ring.empty.description=与一个药水合成
 item.potion_ring.filled.description=穿戴以获得效果
+
+config.title=Ender OR Utils配置界面
+config.general.enderor.hit_box_enable=启用碰撞箱
+config.general.enderor.hit_box_color=碰撞箱颜色

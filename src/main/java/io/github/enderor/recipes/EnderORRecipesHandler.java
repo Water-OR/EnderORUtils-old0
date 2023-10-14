@@ -1,4 +1,4 @@
-package io.github.recipes;
+package io.github.enderor.recipes;
 
 import io.github.enderor.EnderORUtils;
 import net.minecraft.item.crafting.IRecipe;
