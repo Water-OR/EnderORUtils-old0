@@ -40,7 +40,10 @@ public class EnderORItemHandler {
   }
   
   public static void registerModel() {
-    MODEL_MAP.forEach((item, itemIn) -> ModelLoader.setCustomModelResourceLocation(item.getKey(), item.getValue(), new ModelResourceLocation(Objects.requireNonNull(item.getKey().getRegistryName()), itemIn)));
+    MODEL_MAP.forEach((item, itemIn) -> {
+      ModelLoader.setCustomModelResourceLocation(item.getKey(), item.getValue(), new ModelResourceLocation(Objects.requireNonNull(item.getKey().getRegistryName()), itemIn));
+      EnderORUtils.log(Level.WARN, "Register model for item %s:%d", item.getKey().getRegistryName().toString(), item.getValue());
+    });
   }
   
   static {
@@ -58,11 +61,6 @@ public class EnderORItemHandler {
         EnderORUtils.log(Level.WARN, String.format("Register %s item", item.getRegistryName()));
         registry.register(item);
       });
-    }
-    
-    @SubscribeEvent
-    public static void onEvent(ModelRegistryEvent event) {
-      EnderORUtils.proxy.registerModel();
     }
   }
 }

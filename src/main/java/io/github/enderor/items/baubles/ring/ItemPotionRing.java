@@ -37,10 +37,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
   public ItemPotionRing() {
@@ -52,71 +49,73 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
   @Override
   public void makeRecipe() {
     EnderORRecipesHandler.addRecipe((new ShapedRecipe("potion_ring_blank", 3, 3, false))
-            .setInput(0, new ItemStack(Items.IRON_NUGGET, 1, 32767))
-            .setInput(1, new ItemStack(Items.GOLD_INGOT, 1, 32767))
-            .setInput(3, new ItemStack(Items.GOLD_INGOT, 1, 32767))
-            .setInput(5, new ItemStack(Items.GOLD_INGOT, 1, 32767))
-            .setInput(7, new ItemStack(Items.GOLD_INGOT, 1, 32767))
-            .setOutput(this.getDefaultInstance()));
+                                      .setInput(0, new ItemStack(Items.IRON_NUGGET, 1, 32767))
+                                      .setInput(1, new ItemStack(Items.GOLD_INGOT, 1, 32767))
+                                      .setInput(3, new ItemStack(Items.GOLD_INGOT, 1, 32767))
+                                      .setInput(5, new ItemStack(Items.GOLD_INGOT, 1, 32767))
+                                      .setInput(7, new ItemStack(Items.GOLD_INGOT, 1, 32767))
+                                      .setOutput(this.getDefaultInstance()));
     
     EnderORRecipesHandler.addRecipe((new ShapelessRecipe("potion_ring_clear", 1, false) {
-              @Override
-              public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
-                ItemStack result = super.getCraftingResult(inv);
-                EffectHelper.resetEffect(result);
-                return result;
-              }
-            })
-                    .setInput(0, this.getDefaultInstance())
-                    .setOutput(this.getDefaultInstance())
+                                      @Override
+                                      public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
+                                        ItemStack result = super.getCraftingResult(inv);
+                                        EffectHelper.resetEffect(result);
+                                        return result;
+                                      }
+                                    }
+                                    )
+                                      .setInput(0, this.getDefaultInstance())
+                                      .setOutput(this.getDefaultInstance())
     );
     
     EnderORRecipesHandler.addRecipe((new ShapelessRecipe("potion_ring_add", 2, false) {
-              @Override
-              public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
-                ItemStack result = null;
-                for (int i = 0, iMax = inv.getSizeInventory(); i < iMax; ++i) {
-                  ItemStack stack = inv.getStackInSlot(i);
-                  if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotionRing)) {
-                    continue;
-                  }
-                  result = stack.copy();
-                  break;
-                }
-                if (result == null) {
-                  return output.copy();
-                }
-                
-                for (int i = 0, iMax = inv.getSizeInventory(); i < iMax; ++i) {
-                  ItemStack stack = inv.getStackInSlot(i);
-                  if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotion)) {
-                    continue;
-                  }
-                  if (!PotionUtils.getPotionFromItem(stack).equals(PotionTypes.EMPTY)) {
-                    Map<Potion, Integer> effects = new HashMap<>();
-                    PotionUtils.getEffectsFromStack(stack).forEach(effect -> effects.put(effect.getPotion(), effect.getAmplifier()));
-                    EffectHelper.addEffects(result, effects);
-                  }
-                }
-                return result;
-              }
-              
-              @Override
-              public @NotNull NonNullList<ItemStack> getRemainingItems(@NotNull InventoryCrafting inv) {
-                NonNullList<ItemStack> remainingItems = super.getRemainingItems(inv);
-                for (int i = 0, iMax = remainingItems.size(); i < iMax; ++i) {
-                  ItemStack stack = ForgeHooks.getContainerItem(remainingItems.get(i));
-                  if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotion)) {
-                    continue;
-                  }
-                  remainingItems.set(i, new ItemStack(Items.GLASS_BOTTLE, 2, 0));
-                }
-                return remainingItems;
-              }
-            })
-                    .setInput(0, this.getDefaultInstance())
-                    .setInput(1, new ItemStack(Items.POTIONITEM, 1, 32767))
-                    .setOutput(this.getDefaultInstance())
+                                      @Override
+                                      public @NotNull ItemStack getCraftingResult(@NotNull InventoryCrafting inv) {
+                                        ItemStack result = null;
+                                        for (int i = 0, iMax = inv.getSizeInventory(); i < iMax; ++i) {
+                                          ItemStack stack = inv.getStackInSlot(i);
+                                          if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotionRing)) {
+                                            continue;
+                                          }
+                                          result = stack.copy();
+                                          break;
+                                        }
+                                        if (result == null) {
+                                          return output.copy();
+                                        }
+                                        
+                                        for (int i = 0, iMax = inv.getSizeInventory(); i < iMax; ++i) {
+                                          ItemStack stack = inv.getStackInSlot(i);
+                                          if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotion)) {
+                                            continue;
+                                          }
+                                          if (!PotionUtils.getPotionFromItem(stack).equals(PotionTypes.EMPTY)) {
+                                            Map<Potion, Integer> effects = new HashMap<>();
+                                            PotionUtils.getEffectsFromStack(stack).forEach(effect -> effects.put(effect.getPotion(), effect.getAmplifier()));
+                                            EffectHelper.addEffects(result, effects);
+                                          }
+                                        }
+                                        return result;
+                                      }
+                                      
+                                      @Override
+                                      public @NotNull NonNullList<ItemStack> getRemainingItems(@NotNull InventoryCrafting inv) {
+                                        NonNullList<ItemStack> remainingItems = super.getRemainingItems(inv);
+                                        for (int i = 0, iMax = remainingItems.size(); i < iMax; ++i) {
+                                          ItemStack stack = ForgeHooks.getContainerItem(remainingItems.get(i));
+                                          if (stack.isEmpty() || !(stack.getItem() instanceof ItemPotion)) {
+                                            continue;
+                                          }
+                                          remainingItems.set(i, new ItemStack(Items.GLASS_BOTTLE, 2, 0));
+                                        }
+                                        return remainingItems;
+                                      }
+                                    }
+                                    )
+                                      .setInput(0, this.getDefaultInstance())
+                                      .setInput(1, new ItemStack(Items.POTIONITEM, 1, 32767))
+                                      .setOutput(this.getDefaultInstance())
     );
   }
   
@@ -124,9 +123,9 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
   
   @Override
   public @NotNull ItemStack getDefaultInstance() {
-    ItemStack stack = new ItemStack(this, 1, 0);
-    EffectHelper.resetEffect(stack);
-    return stack;
+    ItemStack result = new ItemStack(this, 1, 0);
+    EffectHelper.resetEffect(result);
+    return result;
   }
   
   @Override
@@ -178,7 +177,7 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
         return super.getItemStackDisplayName(stack);
       case 1:
         return I18n.format(this.getUnlocalizedNameInefficiently(stack) + ".name.prev").trim() +
-               I18n.format(String.valueOf(potions.keySet().toArray(new Potion[0])[0].getRegistryName())).trim() +
+               I18n.format(potions.keySet().toArray(new Potion[0])[0].getName()).trim() +
                I18n.format(this.getUnlocalizedNameInefficiently(stack) + ".name.post").trim();
       default:
         return I18n.format(this.getUnlocalizedNameInefficiently(stack) + ".name.multiple").trim();
@@ -193,7 +192,7 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
     }
     PotionType.REGISTRY.forEach(potion -> {
       if (!potion.getEffects().isEmpty()) {
-        ItemStack itemStack = new ItemStack(INSTANCE);
+        ItemStack itemStack = getDefaultInstance();
         potion.getEffects().forEach(effect -> EffectHelper.addEffect(itemStack, effect));
         items.add(itemStack);
       }
@@ -209,20 +208,15 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
     }
     tooltip.add(I18n.format(this.getUnlocalizedNameInefficiently(stack) + ".filled.description"));
     Map<Potion, Integer> effects = EffectHelper.getEffects(stack);
-    effects.forEach((potion, integer) -> {
-      String lore = "";
-      tooltip.add(""
-              .concat((potion.isBadEffect() ? TextFormatting.RED : TextFormatting.BLUE).toString())
-              .concat(I18n.format(potion.getName()).trim())
-              .concat(" ")
-              .concat(I18n.format("potion.potency." + integer).trim())
-      );
-    });
+    effects.forEach((potion, integer) -> tooltip.add("".concat((potion.isBadEffect() ? TextFormatting.RED : TextFormatting.BLUE).toString())
+                                                       .concat(I18n.format(potion.getName()).trim()).concat(" ")
+                                                       .concat(I18n.format("potion.potency." + integer).trim())
+    ));
   }
   
   @Override
   public boolean hasEffect(@NotNull ItemStack stack) {
-    return super.hasEffect(stack) || !EffectHelper.hasEffects(stack);
+    return super.hasEffect(stack) || EffectHelper.hasEffects(stack);
   }
   
   @Mod.EventBusSubscriber
@@ -242,7 +236,8 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
           default:
             return 16253176;
         }
-      }), ItemPotionRing.INSTANCE);
+      }
+                                                     ), ItemPotionRing.INSTANCE);
     }
   }
   
@@ -262,7 +257,7 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
       itemStack.getTagCompound().setTag(EFFECT_TAG, new NBTTagList());
     }
     
-    @Contract("_ -> new")
+    @Contract ("_ -> new")
     public static @NotNull Map<Potion, Integer> getEffects(@NotNull ItemStack itemStack) {
       Map<Potion, Integer> effects = new HashMap<>();
       if (!(itemStack.getItem() instanceof ItemPotionRing)) {
@@ -272,7 +267,7 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
         return effects;
       }
       assert itemStack.getTagCompound() != null;
-      if (!itemStack.getTagCompound().hasKey(EFFECT_TAG, 9) || itemStack.getTagCompound().getTagList(EFFECT_TAG, 10).tagCount() == 0) {
+      if (!itemStack.getTagCompound().hasKey(EFFECT_TAG, 9) || itemStack.getTagCompound().getTagList(EFFECT_TAG, 10).hasNoTags()) {
         resetEffect(itemStack);
         return effects;
       }
@@ -284,10 +279,10 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
         }
         Potion potion = Potion.getPotionFromResourceLocation(tagCompound.getString(EFFECT_ID));
         int level = tagCompound.getInteger(EFFECT_LEVEL);
-        if (potion == null || level == 0) {
+        if (potion == null) {
           continue;
         }
-        effects.put(potion, tagCompound.getInteger(EFFECT_LEVEL));
+        effects.put(potion, level);
       }
       return effects;
     }
@@ -295,12 +290,12 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
     public static void setEffects(@NotNull ItemStack itemStack, @NotNull Map<Potion, Integer> effects) {
       resetEffect(itemStack);
       assert itemStack.getTagCompound() != null;
-      NBTTagList tagList = itemStack.getTagCompound().getTagList(EFFECT_TAG, 9);
+      NBTTagList tagList = itemStack.getTagCompound().getTagList(EFFECT_TAG, 10);
       NBTTagCompound compound = new NBTTagCompound();
       effects.forEach((potion, integer) -> {
         compound.setString(EFFECT_ID, Objects.requireNonNull(potion.getRegistryName()).toString());
         compound.setInteger(EFFECT_LEVEL, integer);
-        tagList.appendTag(compound);
+        tagList.appendTag(compound.copy());
       });
     }
     
@@ -309,16 +304,13 @@ public class ItemPotionRing extends Item implements IBauble, IHasRecipe {
         return;
       }
       Map<Potion, Integer> rawEffects = getEffects(itemStack);
-      Map<Potion, Integer> add = new HashMap<>();
-      Potion[] potions = effects.keySet().toArray(new Potion[0]);
-      for (Potion potion : potions) {
+      effects.forEach((potion, integer) -> {
         if (!rawEffects.containsKey(potion)) {
-          add.put(potion, effects.get(potion));
-        } else if (rawEffects.get(potion) < effects.get(potion)) {
-          rawEffects.replace(potion, effects.get(potion));
+          rawEffects.put(potion, integer);
+        } else if (rawEffects.get(potion) < integer) {
+          rawEffects.replace(potion, integer);
         }
-      }
-      rawEffects.putAll(add);
+      });
       setEffects(itemStack, rawEffects);
     }
     

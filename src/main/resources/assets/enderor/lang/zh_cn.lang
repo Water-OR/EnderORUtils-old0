@@ -9,10 +9,14 @@ item.potion_ring.name.prev=“
 item.potion_ring.name.post=”药水指环
 item.potion_ring.name.multiple=复合药水指环
 item.potion_ring.name=药水指环
+item.enchanted_paper.name=附魔纸
 
 item.potion_ring.empty.description=与一个药水合成
 item.potion_ring.filled.description=穿戴以获得效果
+item.enchanted_paper.empty.description=它是空的！
 
-config.title=Ender OR Utils配置界面
-config.general.enderor.hit_box_enable=启用碰撞箱
-config.general.enderor.hit_box_color=碰撞箱颜色
+config.enderor.default=默认
+config.enderor.default.effect_length=效果长度
+config.enderor.default.effect_show_particles=显示效果粒子
+
+container.enchant_mover=附魔转移器
