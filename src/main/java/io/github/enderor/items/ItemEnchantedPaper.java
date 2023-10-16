@@ -1,6 +1,5 @@
 package io.github.enderor.items;
 
-import io.github.enderor.items.baubles.ring.ItemPotionRing;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.creativetab.CreativeTabs;
