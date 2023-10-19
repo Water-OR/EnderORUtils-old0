@@ -3,7 +3,6 @@ package io.github.enderor.gui;
 import io.github.enderor.EnderORUtils;
 import io.github.enderor.blocks.tileEntities.TileEntityEnchantMover;
 import io.github.enderor.gui.basic.EnderORGuiButton;
-import io.github.enderor.gui.basic.EnderORGuiString;
 import io.github.enderor.items.ItemEnchantedPaper;
 import io.github.enderor.utils.EnchantDescriptionHelper;
 import javafx.util.Pair;
@@ -23,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +32,9 @@ import java.util.Map;
 public class GuiEnchantMover extends GuiContainer {
   protected static final ResourceLocation ENCHANT_MOVER_GUI = new ResourceLocation(EnderORUtils.MOD_ID, "textures/gui/container/enchant_mover.png");
   protected final TileEntityEnchantMover tileEnchantMover;
-  public EnderORGuiString displayName1, displayName2;
+  protected final InventoryPlayer inventoryPlayer;
+  protected final ContainerEnchantMover containerEnchantMover;
+  
   public final ButtonGetAll buttonGetAll;
   public final ButtonTakeALL buttonTakeAll;
   public final Map<Enchantment, ButtonGet> buttonGets = new HashMap<>();
@@ -53,29 +55,44 @@ public class GuiEnchantMover extends GuiContainer {
   public final int buttonTakesWidth = 114;
   public final int buttonTakesHeight = 120;
   
+  protected final List<String> hoveringTest = new ArrayList<>();
+  
   public GuiEnchantMover(InventoryPlayer inventoryPlayer, TileEntityEnchantMover tileEnchantMover) {
-    super(new ContainerEnchantMover(inventoryPlayer, tileEnchantMover));
+    super(new ContainerEnchantMover(inventoryPlayer, tileEnchantMover, Minecraft.getMinecraft().player));
     this.tileEnchantMover = tileEnchantMover;
-    this.xSize = 256;
-    this.ySize = 235;
-    this.buttonGetAll = new ButtonGetAll(0, 231, 155);
-    this.buttonTakeAll = new ButtonTakeALL(1, 7, 155);
+    this.containerEnchantMover = (ContainerEnchantMover) this.inventorySlots;
+    this.inventoryPlayer = inventoryPlayer;
     
-    ItemStack stack0 = this.tileEnchantMover.getStackInSlot(0);
-    ItemStack stack1 = this.tileEnchantMover.getStackInSlot(1);
+    this.xSize = 256;
+    this.ySize = 238;
+    this.buttonGetAll = new ButtonGetAll(0, 7, 155);
+    this.buttonTakeAll = new ButtonTakeALL(1, 231, 155);
+  }
+  
+  @Override
+  public void initGui() {
+    super.initGui();
+  }
+  
+  protected void calcEnchants() {
+    ItemStack stack0 = this.tileEnchantMover.containedItems[0];
+    ItemStack stack1 = this.tileEnchantMover.containedItems[1];
     
     Map<Enchantment, Integer> enchants0 = stack0.getItem() instanceof ItemEnchantedPaper ? ItemEnchantedPaper.EnchantHelper.getEnchants(stack0) : EnchantmentHelper.getEnchantments(stack0);
     Map<Enchantment, Integer> enchants1 = stack1.getItem() instanceof ItemEnchantedPaper ? ItemEnchantedPaper.EnchantHelper.getEnchants(stack1) : EnchantmentHelper.getEnchantments(stack1);
     
     int[] yOffset = new int[2];
     
+    this.buttonGets.clear();
+    this.buttonTakes.clear();
+    
     enchants0.forEach((enchantment, level) -> {
-      buttonGets.put(enchantment, new ButtonGet(0, this.buttonGetsX + this.buttonGetsWidth - 18, this.buttonGetsY + yOffset[0], enchantment, level));
+      this.buttonGets.put(enchantment, new ButtonGet(0, this.buttonGetsX + this.buttonGetsWidth - 18, this.buttonGetsY + yOffset[0], enchantment, level));
       yOffset[0] += 18;
     });
     
     enchants1.forEach((enchantment, level) -> {
-      buttonTakes.put(enchantment, new ButtonTake(1, this.buttonTakesX + this.buttonTakesWidth - 18, this.buttonTakesY + yOffset[1], enchantment, level));
+      this.buttonTakes.put(enchantment, new ButtonTake(1, this.buttonTakesX + this.buttonTakesWidth - 18, this.buttonTakesY + yOffset[1], enchantment, level));
       yOffset[1] += 18;
     });
     
@@ -85,147 +102,142 @@ public class GuiEnchantMover extends GuiContainer {
   
   @Override
   public void drawScreen(int mouseX, int mouseY, float partialTicks) {
+    this.hoveringTest.clear();
+    this.calcEnchants();
+    this.drawDefaultBackground();
     super.drawScreen(mouseX, mouseY, partialTicks);
-    this.buttonGetAll.drawButton(this.mc, mouseX, mouseY, partialTicks);
-    this.buttonTakeAll.drawButton(this.mc, mouseX, mouseY, partialTicks);
     
-    List<String> hoveringTest = new ArrayList<>();
-    
-    GL11.glPushMatrix();
-    GL11.glEnable(GL11.GL_SCISSOR_TEST);
-    drawButtonGets(mouseX, mouseY, partialTicks, hoveringTest);
-    drawButtonTakes(mouseX, mouseY, partialTicks, hoveringTest);
-    GL11.glDisable(GL11.GL_SCISSOR_TEST);
-    GL11.glPopMatrix();
+    mouseX -= this.guiLeft;
+    mouseY -= this.guiTop;
     
     int newScroll = Mouse.getDWheel();
-    newScroll = Integer.compare(newScroll, 0);
+    newScroll = Integer.compare(newScroll, 0) * 2;
     if (isShiftKeyDown()) { newScroll *= 7; }
     if (this.isHoveringButtonTakes(mouseX, mouseY)) {
-      this.buttonGetsScroll += newScroll;
-      this.buttonGetsScroll = Math.max(0, Math.min(this.buttonGetsScroll, this.buttonGetsMaxHeight));
+      this.buttonTakesScroll = Math.max(0, Math.min(this.buttonTakesScroll + newScroll, this.buttonTakesMaxHeight - this.buttonTakesHeight));
     } else if (this.isHoveringButtonGets(mouseX, mouseY)) {
-      this.buttonTakesScroll += newScroll;
-      this.buttonTakesScroll = Math.max(0, Math.min(this.buttonTakesScroll, this.buttonTakesMaxHeight));
-    } else {
-      hoveringTest.clear();
+      this.buttonGetsScroll  = Math.max(0, Math.min(this.buttonGetsScroll  + newScroll, this.buttonGetsMaxHeight  - this.buttonGetsHeight ));
     }
-    this.drawHoveringText(hoveringTest, mouseX, mouseY);
+    
+    mouseX += this.guiLeft;
+    mouseY += this.guiTop;
+    
+    this.renderHoveredToolTip(mouseX, mouseY);
+    this.drawHoveringText(this.hoveringTest, mouseX, mouseY);
   }
   
-  protected void drawButtonGets(int mouseX, int mouseY, float partialTicks, List<String> hoveringTest) {
-    ButtonInfo buttonInfo = new ButtonInfo(0, 0, 0, "");
-    
-    GL11.glScissor(this.buttonGetsX, this.buttonGetsY, this.buttonGetsWidth, this.buttonGetsHeight);
-    GL11.glTranslated(0, -this.buttonGetsScroll, 0);
-    
-    buttonInfo.x = this.buttonGetsX;
-    buttonInfo.y = this.buttonGetsY;
-    
-    this.mc.getTextureManager().bindTexture(ENCHANT_MOVER_GUI);
-    int finalMouseY1 = mouseY + this.buttonGetsScroll;
-    
-    this.buttonGets.forEach((enchantment, button) -> {
-      buttonInfo.displayString = I18n.format(enchantment.getName());
-      buttonInfo.drawButton(this.mc, mouseX, finalMouseY1, partialTicks);
-      buttonInfo.y += button.height;
-      
-      if (buttonInfo.isMouseOver()) {
-        hoveringTest.clear();
-        hoveringTest.add("".concat((button.level < enchantment.getMaxLevel() ? TextFormatting.GRAY :
-                                    button.level > enchantment.getMaxLevel() ? TextFormatting.GOLD : TextFormatting.BLUE
-                                   ).toString())
-                           .concat(I18n.format(enchantment.getName()))
-                           .concat(" ")
-                           .concat(I18n.format("enchantment.level." + button.level))
-                           .concat("\n")
-                           .concat(EnchantDescriptionHelper.getEnchantDescription(enchantment))
-        );
-      }
-    });
-    
-    this.buttonGets.forEach((enchantment, button) -> {
-      button.drawButton(this.mc, mouseX, finalMouseY1, partialTicks);
-      
-      if (buttonInfo.isMouseOver()) {
-        hoveringTest.clear();
-        hoveringTest.add("".concat((button.level < enchantment.getMaxLevel() ? TextFormatting.GRAY :
-                                    button.level > enchantment.getMaxLevel() ? TextFormatting.GOLD : TextFormatting.BLUE
-                                   ).toString())
-                           .concat(I18n.format(enchantment.getName()))
-                           .concat(" ")
-                           .concat(I18n.format("enchantment.level." + button.level))
-                           .concat("\n")
-                           .concat(EnchantDescriptionHelper.getEnchantDescription(enchantment))
-        );
-      }
-    });
-    
-    GL11.glLoadIdentity();
-  }
-  
-  protected void drawButtonTakes(int mouseX, int mouseY, float partialTicks, List<String> hoveringTest) {
-    ButtonInfo buttonInfo = new ButtonInfo(0, 0, 0, "");
-    
-    GL11.glScissor(this.buttonTakesX, this.buttonTakesY, this.buttonTakesWidth, this.buttonTakesHeight);
-    GL11.glTranslated(0, -this.buttonTakesScroll, 0);
-    
-    buttonInfo.x = this.buttonTakesX;
-    buttonInfo.y = this.buttonTakesY;
-    
-    this.mc.getTextureManager().bindTexture(ENCHANT_MOVER_GUI);
-    int finalMouseY2 = mouseY + this.buttonTakesScroll;
-    
-    this.buttonTakes.forEach((enchantment, button) -> {
-      buttonInfo.displayString = I18n.format(enchantment.getName());
-      buttonInfo.drawButton(this.mc, mouseX, finalMouseY2, partialTicks);
-      buttonInfo.y += button.height;
-      
-      if (buttonInfo.isMouseOver()) {
-        hoveringTest.clear();
-        hoveringTest.add("".concat((button.level < enchantment.getMaxLevel() ? TextFormatting.GRAY :
-                                    button.level > enchantment.getMaxLevel() ? TextFormatting.GOLD : TextFormatting.BLUE
-                                   ).toString())
-                           .concat(I18n.format(enchantment.getName()))
-                           .concat(" ")
-                           .concat(I18n.format("enchantment.level." + button.level))
-                           .concat("\n")
-                           .concat(EnchantDescriptionHelper.getEnchantDescription(enchantment))
-        );
-      }
-    });
-    
-    this.buttonTakes.forEach((enchantment, button) -> {
-      button.drawButton(this.mc, mouseX, finalMouseY2, partialTicks);
-      
-      ResourceLocation registerName = enchantment.getRegistryName();
-      
-      if (buttonInfo.isMouseOver()) {
-        hoveringTest.clear();
-        hoveringTest.add("".concat((button.level < enchantment.getMaxLevel() ? TextFormatting.GRAY :
-                                    button.level > enchantment.getMaxLevel() ? TextFormatting.GOLD : TextFormatting.BLUE
-                                   ).toString())
-                           .concat(I18n.format(enchantment.getName()))
-                           .concat(" ")
-                           .concat(I18n.format("enchantment.level." + button.level))
-                           .concat("\n")
-                           .concat(EnchantDescriptionHelper.getEnchantDescription(enchantment))
-        );
-      }
-    });
-    
-    GL11.glLoadIdentity();
+  @Override
+  protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
+    super.drawGuiContainerForegroundLayer(mouseX, mouseY);
+    this.fontRenderer.drawString(this.tileEnchantMover.getDisplayName().getUnformattedText(), 8, 0, 4210752);
   }
   
   @Override
   protected void drawGuiContainerBackgroundLayer(float partialTicks, int mouseX, int mouseY) {
+    int drawX = (this.width - this.xSize) / 2;
+    int drawY = (this.height - this.ySize) / 2;
+    mouseX -= drawX;
+    mouseY -= drawY;
+    
+    GL11.glPushMatrix();
+    GL11.glTranslated(drawX, drawY, 0);
+    
     this.mc.getTextureManager().bindTexture(ENCHANT_MOVER_GUI);
-    int offsetX = (this.width - this.xSize) / 2;
-    int offsetY = (this.height - this.ySize) / 2;
-    this.drawTexturedModalRect(offsetX, offsetY, 0, 0, this.xSize, this.ySize);
+    this.drawTexturedModalRect(0, 0, 0, 0, this.xSize, this.ySize);
+    
+    this.buttonGetAll .drawButton(this.mc, mouseX, mouseY, partialTicks);
+    this.buttonTakeAll.drawButton(this.mc, mouseX, mouseY, partialTicks);
+    
+    GL11.glEnable(GL11.GL_SCISSOR_TEST);
+    drawButtonGets(mouseX, mouseY, partialTicks);
+    drawButtonTakes(mouseX, mouseY, partialTicks);
+    GL11.glDisable(GL11.GL_SCISSOR_TEST);
+    GL11.glPopMatrix();
+  }
+  
+  protected void drawButtonGets(int mouseX, int mouseY, float partialTicks) {
+    GL11.glPushMatrix();
+    GL11.glTranslated(0, -this.buttonGetsScroll, 0);
+    this.mc.getTextureManager().bindTexture(ENCHANT_MOVER_GUI);
+    for (Map.Entry<Enchantment, ButtonGet> entry : this.buttonGets.entrySet()) {
+      ButtonGet button = entry.getValue();
+      button.drawButton(this.mc, mouseX, mouseY, partialTicks);
+      ButtonInfo buttonInfo = new ButtonInfo(0, this.buttonGetsX, button.y, "");
+      buttonInfo.displayString = I18n.format(entry.getKey().getName());
+      buttonInfo.drawButton(this.mc, mouseX, mouseY, partialTicks);
+      buttonInfo.y += button.height;
+      if (buttonInfo.isMouseOver() || button.isMouseOver()) { this.hoveringTest.addAll(button.getHoveringText()); }
+    }
+//    GL11.glScissor(this.buttonGetsX, this.buttonGetsY, this.buttonGetsWidth, this.buttonGetsHeight);
+//    GL11.glViewport(this.buttonGetsX, this.buttonGetsY, this.buttonGetsWidth, this.buttonGetsHeight);
+    GL11.glPopMatrix();
+  }
+  
+  protected void drawButtonTakes(int mouseX, int mouseY, float partialTicks) {
+    GL11.glPushMatrix();
+    GL11.glTranslated(0, -this.buttonTakesScroll, 0);
+    this.mc.getTextureManager().bindTexture(ENCHANT_MOVER_GUI);
+    for (Map.Entry<Enchantment, ButtonTake> entry : this.buttonTakes.entrySet()) {
+      ButtonTake button = entry.getValue();
+      ButtonInfo buttonInfo = new ButtonInfo(0, this.buttonTakesX, button.y, "");
+      button.drawButton(this.mc, mouseX, mouseY, partialTicks);
+      buttonInfo.displayString = I18n.format(entry.getKey().getName());
+      buttonInfo.drawButton(this.mc, mouseX, mouseY, partialTicks);
+      buttonInfo.y += button.height;
+      if (buttonInfo.isMouseOver() || button.isMouseOver()) { this.hoveringTest.addAll(button.getHoveringText()); }
+    }
+//    GL11.glScissor(this.buttonTakesX, this.buttonTakesY, this.buttonTakesWidth, this.buttonTakesHeight);
+//    GL11.glViewport(this.buttonTakesX, this.buttonTakesY, this.buttonTakesWidth, this.buttonTakesHeight);
+    GL11.glPopMatrix();
+  }
+  
+  @Override
+  protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
+    super.mouseClicked(mouseX, mouseY, mouseButton);
+    mouseX -= this.guiLeft;
+    mouseY -= this.guiTop;
+    this.buttonGetAll.mouseDragged(this.mc, mouseX, mouseY);
+    this.buttonTakeAll.mouseDragged(this.mc, mouseX, mouseY);
+    
+    final int finalMouseX = mouseX;
+    final int finalMouseY = mouseY;
+    this.buttonGets.forEach((enchant, button) -> button.mouseDragged(this.mc, finalMouseX, finalMouseY));
+    this.buttonTakes.forEach((enchant, button) -> button.mouseDragged(this.mc, finalMouseX, finalMouseY));
+  }
+  
+  @Override
+  protected void mouseClickMove(int mouseX, int mouseY, int clickedMouseButton, long timeSinceLastClick) {
+    super.mouseClickMove(mouseX, mouseY, clickedMouseButton, timeSinceLastClick);
+    mouseX -= this.guiLeft;
+    mouseY -= this.guiTop;
+    this.buttonGetAll.mouseDragged(this.mc, mouseX, mouseY);
+    this.buttonTakeAll.mouseDragged(this.mc, mouseX, mouseY);
+    
+    final int finalMouseX = mouseX;
+    final int finalMouseY = mouseY;
+    this.buttonGets.forEach((enchant, button) -> button.mouseDragged(this.mc, finalMouseX, finalMouseY));
+    this.buttonTakes.forEach((enchant, button) -> button.mouseDragged(this.mc, finalMouseX, finalMouseY));
+  }
+  
+  @Override
+  protected void mouseReleased(int mouseX, int mouseY, int state) {
+    super.mouseReleased(mouseX, mouseY, state);
+    mouseX -= this.guiLeft;
+    mouseY -= this.guiTop;
+    this.buttonGetAll.mouseReleased(mouseX, mouseY);
+    this.buttonTakeAll.mouseReleased(mouseX, mouseY);
+    
+    int finalMouseX = mouseX;
+    int finalMouseY = mouseY;
+    this.buttonGets.forEach((enchant, button) -> button.mouseReleased(finalMouseX, finalMouseY));
+    this.buttonTakes.forEach((enchant, button) -> button.mouseReleased(finalMouseX, finalMouseY));
+    
   }
   
   public static class ButtonBasic extends EnderORGuiButton {
+    public Enchantment enchant;
+    public int level;
+    
     public ButtonBasic(int buttonId, int x, int y, int iconX, int iconY) {
       super(buttonId, x, y, 96, 238, iconX, iconY, 18, 18, ENCHANT_MOVER_GUI, ENCHANT_MOVER_GUI);
     }
@@ -233,7 +245,18 @@ public class GuiEnchantMover extends GuiContainer {
     @Override
     public Pair<Integer, Integer> getBackgroundPosition() {
       Pair<Integer, Integer> result = super.getBackgroundPosition();
-      if (this.selected) { result = new Pair<>(result.getKey(), result.getValue() + this.width); }
+      if (this.selected) { result = new Pair<>(result.getKey() + this.width, result.getValue()); }
+      return result;
+    }
+    
+    public List<String> getHoveringText() {
+      List<String> result = new ArrayList<>();
+      result.add("".concat((this.level < this.enchant.getMaxLevel() ? TextFormatting.GRAY :
+                            this.level > this.enchant.getMaxLevel() ? TextFormatting.GOLD : TextFormatting.BLUE
+                           ).toString())
+                   .concat(I18n.format(this.enchant.getName())).concat(" ")
+                   .concat(I18n.format("enchantment.level." + this.level)));
+      result.add(EnchantDescriptionHelper.getEnchantDescription(this.enchant));
       return result;
     }
   }
@@ -262,14 +285,16 @@ public class GuiEnchantMover extends GuiContainer {
       int drawY = this.y + (this.height - fontRenderer.FONT_HEIGHT) / 2;
       this.drawString(Minecraft.getMinecraft().fontRenderer, this.displayString, drawX, drawY, this.getTextColor());
     }
+    
+    @Override
+    public int getTextColor() {
+      return 14737632;
+    }
   }
   
   public class ButtonTake extends ButtonBasic {
-    public Enchantment enchant;
-    public int level;
-    
     public ButtonTake(int buttonId, int x, int y, Enchantment enchant, int level) {
-      super(buttonId, x, y, 132, 238);
+      super(buttonId, x, y, 150, 238);
       this.enchant = enchant;
       this.level = level;
     }
@@ -297,11 +322,8 @@ public class GuiEnchantMover extends GuiContainer {
   }
   
   public class ButtonGet extends ButtonBasic {
-    public Enchantment enchant;
-    public int level;
-    
     public ButtonGet(int buttonId, int x, int y, Enchantment enchant, int level) {
-      super(buttonId, x, y, 150, 238);
+      super(buttonId, x, y, 132, 238);
       this.enchant = enchant;
       this.level = level;
     }
@@ -332,7 +354,7 @@ public class GuiEnchantMover extends GuiContainer {
   
   public class ButtonGetAll extends ButtonBasic {
     public ButtonGetAll(int buttonId, int x, int y) {
-      super(buttonId, x, y, 168, 238);
+      super(buttonId, x, y, 186, 238);
     }
     
     @Override
@@ -341,6 +363,12 @@ public class GuiEnchantMover extends GuiContainer {
         this.getEnchants();
       }
       super.mouseReleased(mouseX, mouseY);
+    }
+    
+    @Override
+    public void drawButton(@NotNull Minecraft mc, int mouseX, int mouseY, float partialTicks) {
+      super.drawButton(mc, mouseX, mouseY, partialTicks);
+      if (this.hovered) { GuiEnchantMover.this.hoveringTest.addAll(this.getHoveringText()); }
     }
     
     protected void getEnchants() {
@@ -360,11 +388,30 @@ public class GuiEnchantMover extends GuiContainer {
         }
       });
     }
+    
+    @Override
+    public List<String> getHoveringText() {
+      List<String> result = new ArrayList<>();
+      for (Map.Entry<Enchantment, ButtonGet> entry : GuiEnchantMover.this.buttonGets.entrySet()) {
+        result.add("".concat((entry.getValue().level < entry.getValue().enchant.getMaxLevel() ? TextFormatting.GRAY :
+                              entry.getValue().level > entry.getValue().enchant.getMaxLevel() ? TextFormatting.GOLD : TextFormatting.BLUE
+                             ).toString())
+                     .concat(I18n.format(entry.getValue().enchant.getName())).concat(" ")
+                     .concat(I18n.format("enchantment.level." + entry.getValue().level)));
+      }
+      return result;
+    }
   }
   
   public class ButtonTakeALL extends ButtonBasic {
     public ButtonTakeALL(int buttonId, int x, int y) {
-      super(buttonId, x, y, 186, 238);
+      super(buttonId, x, y, 168, 238);
+    }
+    
+    @Override
+    public void drawButton(@NotNull Minecraft mc, int mouseX, int mouseY, float partialTicks) {
+      super.drawButton(mc, mouseX, mouseY, partialTicks);
+      if (this.hovered) { GuiEnchantMover.this.hoveringTest.addAll(this.getHoveringText()); }
     }
     
     @Override
@@ -382,6 +429,19 @@ public class GuiEnchantMover extends GuiContainer {
       } else {
         EnchantmentHelper.setEnchantments(new HashMap<>(), stack);
       }
+    }
+    
+    @Override
+    public List<String> getHoveringText() {
+      List<String> result = new ArrayList<>();
+      for (Map.Entry<Enchantment, ButtonTake> entry : GuiEnchantMover.this.buttonTakes.entrySet()) {
+        result.add("".concat((entry.getValue().level < entry.getValue().enchant.getMaxLevel() ? TextFormatting.GRAY :
+                              entry.getValue().level > entry.getValue().enchant.getMaxLevel() ? TextFormatting.GOLD : TextFormatting.BLUE
+                             ).toString())
+                     .concat(I18n.format(entry.getValue().enchant.getName())).concat(" ")
+                     .concat(I18n.format("enchantment.level." + entry.getValue().level)));
+      }
+      return result;
     }
   }
 }

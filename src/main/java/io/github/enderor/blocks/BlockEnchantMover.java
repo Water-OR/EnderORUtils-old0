@@ -3,14 +3,16 @@ package io.github.enderor.blocks;
 import io.github.enderor.blocks.tileEntities.IHasTileEntity;
 import io.github.enderor.blocks.tileEntities.TileEntityEnchantMover;
 import io.github.enderor.gui.GuiEnchantMover;
-import net.minecraft.block.Block;
+import net.minecraft.block.BlockContainer;
 import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.play.server.SPacketOpenWindow;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.EnumBlockRenderType;
@@ -30,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
-public class BlockEnchantMover extends Block implements IHasTileEntity {
+public class BlockEnchantMover extends BlockContainer implements IHasTileEntity {
   public BlockEnchantMover() {
     super(Material.ROCK, MapColor.GRAY);
     this.setLightOpacity(0);
@@ -57,7 +59,7 @@ public class BlockEnchantMover extends Block implements IHasTileEntity {
     for (int i = -2; i <= 2; ++i) {
       for (int j = -2; j <= 2; ++j) {
         if (i > -2 && i < 2 && j == -1) { j = 2; }
-        if (rand.nextInt(8) != 0) { continue; }
+        if (rand.nextInt(4) != 0) { continue; }
         makeParticle(i, j, worldIn, pos, rand);
       }
     }
@@ -89,12 +91,12 @@ public class BlockEnchantMover extends Block implements IHasTileEntity {
   }
   
   @Override
-  public @NotNull EnumBlockRenderType getRenderType(IBlockState state) {
+  public @NotNull EnumBlockRenderType getRenderType(@NotNull IBlockState state) {
     return EnumBlockRenderType.MODEL;
   }
   
   @Override
-  public boolean hasTileEntity(IBlockState state) { return true; }
+  public boolean hasTileEntity(@NotNull IBlockState state) { return true; }
   
   @Nullable
   @Override
@@ -104,28 +106,54 @@ public class BlockEnchantMover extends Block implements IHasTileEntity {
   
   @Override
   public boolean onBlockActivated(@NotNull World worldIn, @NotNull BlockPos pos, @NotNull IBlockState state, @NotNull EntityPlayer playerIn, @NotNull EnumHand hand, @NotNull EnumFacing facing, float hitX, float hitY, float hitZ) {
-    if (!(worldIn.getTileEntity(pos) instanceof TileEntityEnchantMover) || !(state.getBlock() instanceof BlockEnchantMover)) {
+    TileEntity tile0 = worldIn.getTileEntity(pos);
+    if (!(tile0 instanceof TileEntityEnchantMover) || !(state.getBlock() instanceof BlockEnchantMover)) {
       return super.onBlockActivated(worldIn, pos, state, playerIn, hand, facing, hitX, hitY, hitZ);
     }
+    
+    TileEntityEnchantMover tile = (TileEntityEnchantMover) tile0;
+    
     if (playerIn instanceof EntityPlayerSP) {
-      Minecraft.getMinecraft().displayGuiScreen(new GuiEnchantMover(playerIn.inventory, (TileEntityEnchantMover) worldIn.getTileEntity(pos)));
-      return true;
-    } else if (playerIn instanceof EntityPlayerMP) {
-      TileEntityEnchantMover tile = new TileEntityEnchantMover();
-      EntityPlayerMP playerMP = (EntityPlayerMP) playerIn;
-      playerMP.getNextWindowId();
-      playerMP.connection.sendPacket(new SPacketOpenWindow(playerMP.currentWindowId, tile.getGuiID(), tile.getDisplayName()));
-      playerMP.openContainer = tile.createContainer(playerMP.inventory, playerMP);
-      playerMP.openContainer.windowId = playerMP.currentWindowId;
-      playerMP.openContainer.addListener(playerMP);
-      MinecraftForge.EVENT_BUS.post(new PlayerContainerEvent.Open(playerMP, playerMP.openContainer));
+      Minecraft.getMinecraft().displayGuiScreen(new GuiEnchantMover(playerIn.inventory, tile));
       return true;
     }
-    return false;
+    
+    if (!(playerIn instanceof EntityPlayerMP)) { return false; }
+    
+    EntityPlayerMP playerMP = (EntityPlayerMP) playerIn;
+    
+    playerMP.getNextWindowId();
+    playerMP.connection.sendPacket(new SPacketOpenWindow(playerMP.currentWindowId, tile.getGuiID(), tile.getDisplayName()));
+    playerMP.openContainer = tile.createContainer(playerMP.inventory, playerMP);
+    playerMP.openContainer.windowId = playerMP.currentWindowId;
+    playerMP.openContainer.addListener(playerMP);
+    
+    MinecraftForge.EVENT_BUS.post(new PlayerContainerEvent.Open(playerMP, playerMP.openContainer));
+    
+    return true;
+  }
+  
+  @Override
+  public void onBlockPlacedBy(@NotNull World worldIn, @NotNull BlockPos pos, @NotNull IBlockState state, @NotNull EntityLivingBase placer, @NotNull ItemStack stack) {
+    super.onBlockPlacedBy(worldIn, pos, state, placer, stack);
+    
+    if (!stack.hasDisplayName()) { return; }
+    
+    TileEntity tileEntity = worldIn.getTileEntity(pos);
+    
+    if (!(tileEntity instanceof TileEntityEnchantMover)) { return; }
+    
+    ((TileEntityEnchantMover) tileEntity).setCustomName(stack.getDisplayName());
   }
   
   @Override
   public Class<? extends TileEntity> getTileEntity() {
     return TileEntityEnchantMover.class;
+  }
+  
+  @Nullable
+  @Override
+  public TileEntity createNewTileEntity(@NotNull World worldIn, int meta) {
+    return new TileEntityEnchantMover();
   }
 }

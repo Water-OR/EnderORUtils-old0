@@ -15,6 +15,8 @@ item.potion_ring.empty.description=Craft with an potion
 item.potion_ring.filled.description=Wear it to get the effect
 item.enchanted_paper.empty.description=It's empty!
 
+tile.enchant_mover.name=Enchant Mover
+
 config.enderor.default=Default
 config.enderor.default.effect_length=Effect Length
 config.enderor.default.effect_show_particles=Show Effect Particles

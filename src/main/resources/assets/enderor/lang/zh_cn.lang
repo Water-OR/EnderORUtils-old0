@@ -15,6 +15,8 @@ item.potion_ring.empty.description=与一个药水合成
 item.potion_ring.filled.description=穿戴以获得效果
 item.enchanted_paper.empty.description=它是空的！
 
+tile.enchant_mover.name=附魔转移者
+
 config.enderor.default=默认
 config.enderor.default.effect_length=效果长度
 config.enderor.default.effect_show_particles=显示效果粒子

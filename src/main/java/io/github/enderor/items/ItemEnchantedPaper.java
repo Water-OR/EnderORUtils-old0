@@ -39,7 +39,7 @@ public class ItemEnchantedPaper extends Item {
     ItemStack stack = this.getDefaultInstance();
     if (Objects.equals(this.getCreativeTab(), tab)) {
       Enchantment.REGISTRY.forEach(enchantment -> {
-        for (int i = enchantment.getMinLevel(), iMax = enchantment.getMaxLevel(); i < iMax; ++i) {
+        for (int i = enchantment.getMinLevel(), iMax = enchantment.getMaxLevel(); i <= iMax; ++i) {
           EnchantHelper.resetEnchant(stack);
           EnchantHelper.addEnchant(stack, enchantment, i);
           items.add(stack.copy());
@@ -107,8 +107,9 @@ public class ItemEnchantedPaper extends Item {
         return enchants;
       }
       NBTTagList tagList = itemStack.getTagCompound().getTagList(ENCHANT_TAG, 10);
+      NBTTagCompound tagCompound;
       for (int i = 0, iMax = tagList.tagCount(); i < iMax; ++i) {
-        NBTTagCompound tagCompound = tagList.getCompoundTagAt(i);
+        tagCompound = tagList.getCompoundTagAt(i);
         if (!tagCompound.hasKey(ENCHANT_TAG_ID, 8) || !tagCompound.hasKey(ENCHANT_TAG_LEVEL, 3)) {
           continue;
         }
@@ -180,7 +181,7 @@ public class ItemEnchantedPaper extends Item {
       }
       
       assert itemStack.getTagCompound() != null;
-      return itemStack.getTagCompound().hasKey(ENCHANT_TAG_LEVEL, 9) && !itemStack.getTagCompound().getTagList(ENCHANT_TAG_LEVEL, 10).hasNoTags();
+      return itemStack.getTagCompound().hasKey(ENCHANT_TAG, 9) && !itemStack.getTagCompound().getTagList(ENCHANT_TAG, 10).hasNoTags();
     }
   }
 }

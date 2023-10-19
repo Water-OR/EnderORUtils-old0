@@ -6,8 +6,10 @@ import io.github.enderor.items.ItemEnchantedPaper;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.Container;
+import net.minecraft.item.ItemEnchantedBook;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntityLockable;
 import net.minecraft.util.ITickable;
 import net.minecraft.util.math.MathHelper;
@@ -32,7 +34,7 @@ public class TileEntityEnchantMover extends TileEntityLockable implements ITicka
   public double bookRotationPrev;
   public double tRot;
   
-  ItemStack[] containedItems = new ItemStack[2];
+  public ItemStack[] containedItems = new ItemStack[2];
   
   private static final Random rand = new Random();
   
@@ -52,18 +54,17 @@ public class TileEntityEnchantMover extends TileEntityLockable implements ITicka
     
     if (this.hasCustomName()) { compound.setString("CustomName", this.customName); }
     
-/*
     NBTTagList tagList = new NBTTagList();
 
     for (int i = 0; i < this.containedItems.length; i++) {
       NBTTagCompound compound1 = new NBTTagCompound();
+      
       compound1.setInteger(NBT_KEY_SLOT, i);
-      compound1.setTag(NBT_KEY_STACK, this.containedItems[i].serializeNBT());
+      compound1.setTag(NBT_KEY_STACK, this.getStackInSlot(i).serializeNBT());
       tagList.appendTag(compound1);
     }
 
     compound.setTag(NBT_KEY, tagList);
-*/
     
     return compound;
   }
@@ -74,23 +75,26 @@ public class TileEntityEnchantMover extends TileEntityLockable implements ITicka
     
     if (compound.hasKey("CustomName", 8)) { this.customName = compound.getString("CustomName"); }
 
-/*
     if (!compound.hasKey(NBT_KEY, 9)) {
       return;
     }
     NBTTagList tagList = compound.getTagList(NBT_KEY, 10);
+    
     tagList.forEach(nbtBase -> {
       NBTTagCompound compound2 = (NBTTagCompound) nbtBase;
-      if (compound2.hasKey(NBT_KEY_SLOT, 3) && compound2.hasKey(NBT_KEY_STACK, 10)) {
-        int slot = compound2.getInteger(NBT_KEY_SLOT);
-        if (this.containedItems.length <= slot || slot < 0) { return; }
-        NBTTagCompound stack = compound2.getCompoundTag(NBT_KEY_STACK);
-        ItemStack stack1 = new ItemStack(stack);
-        if (stack1.isEmpty()) { return; }
-        this.containedItems[slot] = stack1;
-      }
+      
+      if (!compound2.hasKey(NBT_KEY_SLOT, 3) || !compound2.hasKey(NBT_KEY_STACK, 10)) { return; }
+      int slot = compound2.getInteger(NBT_KEY_SLOT);
+      
+      if (this.containedItems.length <= slot || slot < 0) { return; }
+      
+      NBTTagCompound stack = compound2.getCompoundTag(NBT_KEY_STACK);
+      ItemStack stack1 = new ItemStack(stack);
+      
+      if (stack1.isEmpty()) { return; }
+      
+      this.setInventorySlotContents(slot, stack1);
     });
-*/
   }
   
   @Override
@@ -136,17 +140,7 @@ public class TileEntityEnchantMover extends TileEntityLockable implements ITicka
   
   @Override
   public @NotNull Container createContainer(@NotNull InventoryPlayer playerInventory, @NotNull EntityPlayer playerIn) {
-    return new ContainerEnchantMover(playerInventory, this);
-  }
-  
-  @Override
-  public @NotNull String getGuiID() {
-    return EnderORUtils.MOD_ID + ":enchant_mover";
-  }
-  
-  @Override
-  public @NotNull String getName() {
-    return this.hasCustomName() ? this.customName : "container.enchant_mover";
+    return new ContainerEnchantMover(playerInventory, this, playerIn);
   }
   
   @Override
@@ -172,20 +166,17 @@ public class TileEntityEnchantMover extends TileEntityLockable implements ITicka
   
   @Override
   public boolean isEmpty() {
-    for (int i = 0; i < this.containedItems.length; i++) {
-      if (!this.containedItems[i].isEmpty()) { return true; }
-    }
-    return false;
+    return Arrays.stream(this.containedItems).anyMatch(containedItem -> !containedItem.isEmpty());
   }
   
   @Override
   public @NotNull ItemStack getStackInSlot(int index) {
-    return 0 < index && index < this.containedItems.length ? this.containedItems[index] : ItemStack.EMPTY;
+    return 0 <= index && index < this.containedItems.length ? this.containedItems[index] : ItemStack.EMPTY;
   }
   
   @Override
   public @NotNull ItemStack decrStackSize(int index, int count) {
-    if (this.containedItems.length <= index || index <= 0 || this.containedItems[index].isEmpty()) {
+    if (this.containedItems.length <= index || index < 0 || this.containedItems[index].isEmpty()) {
       return ItemStack.EMPTY;
     }
     if (this.containedItems[index].getCount() < count) { return this.removeStackFromSlot(index); }
@@ -216,30 +207,33 @@ public class TileEntityEnchantMover extends TileEntityLockable implements ITicka
   public void openInventory(@NotNull EntityPlayer player) { }
   
   @Override
-  public void closeInventory(@NotNull EntityPlayer player) { }
+  public void closeInventory(@NotNull EntityPlayer player) {
+  }
   
   @Override
   public boolean isItemValidForSlot(int index, @NotNull ItemStack stack) {
-    return 0 <= index && index < this.containedItems.length && (index != 1 || stack.getItem() instanceof ItemEnchantedPaper);
+    return 0 <= index && index < this.containedItems.length && (stack.getItem() instanceof ItemEnchantedPaper || stack.getItem() instanceof ItemEnchantedBook);
   }
   
   @Override
-  public int getField(int id) {
-    return 0;
+  public @NotNull String getGuiID() {
+    return EnderORUtils.MOD_ID + ":enchant_mover";
   }
   
   @Override
-  public void setField(int id, int value) {
-  
+  public @NotNull String getName() {
+    return this.hasCustomName() ? this.customName : "container.enchant_mover";
   }
   
   @Override
-  public int getFieldCount() {
-    return 0;
-  }
+  public int getField(int id) { return 0; }
   
   @Override
-  public void clear() {
-    Arrays.fill(this.containedItems, ItemStack.EMPTY);
-  }
+  public void setField(int id, int value) { }
+  
+  @Override
+  public int getFieldCount() { return 0; }
+  
+  @Override
+  public void clear() { Arrays.fill(this.containedItems, ItemStack.EMPTY); }
 }

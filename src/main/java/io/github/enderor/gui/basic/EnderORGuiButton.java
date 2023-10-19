@@ -22,7 +22,7 @@ public class EnderORGuiButton extends GuiButton {
     this.backgroundX = backgroundX;
     this.backgroundY = backgroundY;
     this.background = background;
-    this.hasIcon = (icon == null);
+    this.hasIcon = (icon != null);
   }
   
   public EnderORGuiButton(int buttonId, int x, int y, int backgroundX, int backgroundY, int widthIn, int heightIn, ResourceLocation background, String buttonText) {
@@ -128,14 +128,14 @@ public class EnderORGuiButton extends GuiButton {
   }
   
   @Override
-  protected void mouseDragged(@NotNull Minecraft mc, int mouseX, int mouseY) {
+  public void mouseDragged(@NotNull Minecraft mc, int mouseX, int mouseY) {
     super.mouseDragged(mc, mouseX, mouseY);
-    this.selected = mousePressed(mc, mouseX, mouseY);
+    this.setSelected(mousePressed(mc, mouseX, mouseY));
   }
   
   @Override
   public void mouseReleased(int mouseX, int mouseY) {
     super.mouseReleased(mouseX, mouseY);
-    this.selected = false;
+    this.setSelected(false);
   }
 }
